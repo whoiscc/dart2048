@@ -1,4 +1,4 @@
-@import url(https://fonts.googleapis.com/css?family=Fira+Sans:lighter);
+@import url(https://fonts.googleapis.com/css?family=Fira+Sans:lighter,normal);
 
 html, body {
   width: 100%;
@@ -8,10 +8,16 @@ html, body {
   font-family: 'Fira Sans', sans-serif;
 }
 
+#grid {
+  position: relative;
+}
+
 .block {
-  border: 1px solid;
+  border: 1.5px solid;
   position: absolute;
   text-align: center;
+  font-weight: lighter;
+  transition: ease-in-out;
 }
 
 .block-level-1:after {
