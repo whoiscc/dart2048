@@ -10,6 +10,7 @@ class Animator {
 
   List<Move> _moves;
   List<Grow> _grows;
+  List<Merge> _merges;
 
   Animator() {
     _moves = List();
@@ -29,7 +30,15 @@ class Animator {
     return nextBlock;
   }
 
-  apply({Function() beforeGrow}) {
+  Block merge(Block merged1, Block merged2) {
+    assert(BlockCoord.isEqual(merged1.coord, merged2.coord) &&
+        Block.sameLevel(merged1, merged2));
+    final nextBlock = Block(merged1.level + 1, merged1.coord);
+    _merges.add(Merge(merged1, merged2, nextBlock));
+    return nextBlock;
+  }
+
+  apply(Function() after, {Function() beforeGrow}) {
     final stage2Delay = _moves.isEmpty ? 0 : Animator.stage1Duration;
     for (Move move in _moves) {
       move.block.coord = move.nextBlock.coord;
@@ -37,13 +46,15 @@ class Animator {
     _moves.clear();
     final savedGrows = List.from(_grows);
     _grows.clear();
-    Timer(Duration(seconds: stage2Delay), () {
+    Timer(Duration(milliseconds: (stage2Delay * 1000).floor()), () {
       print('clean');
       for (Grow grow in savedGrows) {
         grow.block
           ..sizeTransDuration = 0
           ..size = 0;
       }
+      // this will waste a frame if beforeGrow is null, which is the most
+      // common case, so it may be fixed later
       window.requestAnimationFrame((n) {
         if (beforeGrow != null) {
           beforeGrow();
@@ -55,6 +66,8 @@ class Animator {
               ..sizeTransDuration = Animator.stage2Duration
               ..size = Block.normalSize;
           }
+          // TODO: merge animation
+          Timer(Duration(milliseconds: (stage2Duration * 1000).floor()), after);
         });
       });
     });
@@ -69,4 +82,9 @@ class Move {
 class Grow {
   final Block block;
   Grow(this.block);
+}
+
+class Merge {
+  final Block merged1, merged2, nextBlock;
+  Merge(this.merged1, this.merged2, this.nextBlock);
 }

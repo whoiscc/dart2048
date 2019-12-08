@@ -8,8 +8,10 @@ void main() {
   final grid = Block.gridElement()..id = 'grid';
   querySelector('#output').children.add(grid);
   final animator = Animator();
-  final group = BlockGroup.initialize(animator);
-  animator.apply(beforeGrow: () {
+  var group = BlockGroup.initialize(animator);
+  animator.apply(() {
+    group = group.apply(Direction.right, animator);
+  }, beforeGrow: () {
     print('attach');
     group.attach(grid);
   });

@@ -60,7 +60,7 @@ class BlockGroup {
     });
     final bool littleEndian =
         direction == Direction.left || direction == Direction.up;
-    final int near = littleEndian ? 0 : BlockGroup.gridSize,
+    final int near = littleEndian ? 0 : BlockGroup.gridSize - 1,
         far = BlockGroup.gridSize - near - 1,
         step = littleEndian ? 1 : -1;
     List<List<Block>> nextGrid = List.filled(BlockGroup.gridSize, null);
@@ -70,14 +70,15 @@ class BlockGroup {
             _applyRow(grid[row], near, step, far, RowAnimator(animator, row));
       }
     } else {
-      nextGrid = nextGrid.map((n) => List.filled(BlockGroup.gridSize, null))
-          as List<List<Block>>;
+      nextGrid = nextGrid
+          .map<List<Block>>((n) => List.filled(BlockGroup.gridSize, null))
+          .toList();
       for (int col = 0; col < BlockGroup.gridSize; col += 1) {
-        final column = List.generate(BlockGroup.gridSize, (i) => grid[i][col]);
+        final column = List.generate(BlockGroup.gridSize, (i) => grid[col][i]);
         _applyRow(column, near, step, far, ColumnAnimator(animator, col))
             .asMap()
             .forEach((i, block) {
-          nextGrid[i][col] = block;
+          nextGrid[col][i] = block;
         });
       }
     }
@@ -130,7 +131,7 @@ abstract class VecAnimator {
 }
 
 class RowAnimator extends VecAnimator {
-  final animator;
+  final Animator animator;
   final int index;
 
   RowAnimator(this.animator, this.index);
@@ -139,11 +140,11 @@ class RowAnimator extends VecAnimator {
       animator.move(block, BlockCoord(dest, index));
 
   Block merge(Block block1, Block block2, int dest) =>
-      animator.merge(block1, block2, BlockCoord(dest, index));
+      animator.merge(block1, block2);
 }
 
 class ColumnAnimator extends VecAnimator {
-  final animator;
+  final Animator animator;
   final int index;
 
   ColumnAnimator(this.animator, this.index);
@@ -152,5 +153,5 @@ class ColumnAnimator extends VecAnimator {
       animator.move(block, BlockCoord(index, dest));
 
   Block merge(Block block1, Block block2, int dest) =>
-      animator.merge(block1, block2, BlockCoord(index, dest));
+      animator.merge(block1, block2);
 }
