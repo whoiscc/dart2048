@@ -36,22 +36,26 @@ class BlockGroup {
   factory BlockGroup.initialize(Animator animator,
       {status = BlockStatus.current}) {
     List<BlockCoord> coordList = List();
-    Random rand = Random();
     for (int i = 0; i < initialSize; i++) {
-      while (true) {
-        final nextCoord =
-            BlockCoord(rand.nextInt(gridSize), rand.nextInt(gridSize));
-        if (!coordList.any((coord) => BlockCoord.isEqual(coord, nextCoord))) {
-          coordList.add(nextCoord);
-          break;
-        }
-      }
+      coordList.add(BlockGroup.findAvailable(coordList));
     }
     return BlockGroup(
         List.from(coordList.map((coord) => animator.grow(coord))));
   }
 
-  BlockGroup apply(Direction direction, animator) {
+  static BlockCoord findAvailable(List<BlockCoord> existCoords) {
+    assert(existCoords.length < BlockGroup.gridSize * BlockGroup.gridSize);
+    Random rand = Random();
+    while (true) {
+      final nextCoord =
+          BlockCoord(rand.nextInt(gridSize), rand.nextInt(gridSize));
+      if (!existCoords.any((coord) => BlockCoord.isEqual(coord, nextCoord))) {
+        return nextCoord;
+      }
+    }
+  }
+
+  BlockGroup apply(Direction direction, Animator animator) {
     List<List<Block>> grid = List.generate(
         BlockGroup.gridSize, (i) => List.filled(BlockGroup.gridSize, null));
     blocks.forEach((block) {
@@ -63,35 +67,35 @@ class BlockGroup {
     final int near = littleEndian ? 0 : BlockGroup.gridSize - 1,
         far = BlockGroup.gridSize - near - 1,
         step = littleEndian ? 1 : -1;
-    List<List<Block>> nextGrid = List.filled(BlockGroup.gridSize, null);
+
+    List<Block> blockList = [];
     if (direction == Direction.left || direction == Direction.right) {
       for (int row = 0; row < BlockGroup.gridSize; row += 1) {
-        nextGrid[row] =
-            _applyRow(grid[row], near, step, far, RowAnimator(animator, row));
+        blockList.addAll(
+            _applyRow(grid[row], near, step, far, RowAnimator(animator, row)));
       }
     } else {
-      nextGrid = nextGrid
-          .map<List<Block>>((n) => List.filled(BlockGroup.gridSize, null))
-          .toList();
       for (int col = 0; col < BlockGroup.gridSize; col += 1) {
         final column = List.generate(BlockGroup.gridSize, (i) => grid[i][col]);
-        _applyRow(column, near, step, far, ColumnAnimator(animator, col))
-            .asMap()
-            .forEach((i, block) {
-          nextGrid[i][col] = block;
-        });
+        blockList.addAll(
+            _applyRow(column, near, step, far, ColumnAnimator(animator, col)));
       }
     }
-    // TODO: check difference & grow
-    return BlockGroup(nextGrid
-        .expand((blocks) => blocks)
-        .where((block) => block != null)
-        .toList());
+
+    blockList = blockList.where((block) => block != null).toList();
+    if (!animator.isEmpty) {
+      // there must be some empty position after an non-trivial action
+      final BlockCoord coord = BlockGroup.findAvailable(
+          blockList.map<BlockCoord>((block) => block.coord).toList());
+      blockList.add(animator.grow(coord));
+    }
+    return BlockGroup(blockList);
   }
 
   List<Block> _applyRow(
       List<Block> row, int near, int step, int far, VecAnimator animator) {
     List<Block> nextRow = List.filled(BlockGroup.gridSize, null);
+    List<bool> mergedBlock = List.filled(BlockGroup.gridSize, false);
     if (row[near] != null) {
       // the nearest block cannot move
       // but it may be merged later
@@ -104,20 +108,20 @@ class BlockGroup {
       final block = row[index];
       int dest;
       for (dest = index - step;
-          nextRow[dest] == null || Block.sameLevel(nextRow[dest], block);
-          dest -= step) {
-        if (dest == near) {
-          // row is empty from index to near
-          break;
-        }
-      }
+          nextRow[dest] == null && dest != near;
+          dest -= step) {}
       if (nextRow[dest] == null) {
         // empty row case
         assert(dest == near);
         nextRow[near] = animator.move(block, near);
-      } else if (Block.sameLevel(nextRow[dest], block)) {
+      } else if (Block.sameLevel(nextRow[dest], block) && !mergedBlock[dest]) {
         // mergable case
-        nextRow[dest] = animator.merge(block, nextRow[dest]);
+        // notice the discarded immediate moving block
+        // it exists for animation, but it should not be part of
+        // next block group
+        nextRow[dest] =
+            animator.merge(animator.move(block, dest), nextRow[dest]);
+        mergedBlock[dest] = true;
       } else if (dest + step != index) {
         // if dest + step == index, then block is stuck and nothing happened
         nextRow[dest + step] = animator.move(block, dest + step);

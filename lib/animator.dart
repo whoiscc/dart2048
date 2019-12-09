@@ -72,6 +72,9 @@ class Animator {
       });
     });
   }
+
+  // assert(_merges.isEmpty) when this.isEmpty
+  bool get isEmpty => _moves.isEmpty && _grows.isEmpty;
 }
 
 class Move {
