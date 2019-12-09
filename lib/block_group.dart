@@ -55,8 +55,8 @@ class BlockGroup {
     List<List<Block>> grid = List.generate(
         BlockGroup.gridSize, (i) => List.filled(BlockGroup.gridSize, null));
     blocks.forEach((block) {
-      assert(grid[block.coord.x][block.coord.y] == null);
-      grid[block.coord.x][block.coord.y] = block;
+      assert(grid[block.coord.row][block.coord.col] == null);
+      grid[block.coord.row][block.coord.col] = block;
     });
     final bool littleEndian =
         direction == Direction.left || direction == Direction.up;
@@ -74,17 +74,19 @@ class BlockGroup {
           .map<List<Block>>((n) => List.filled(BlockGroup.gridSize, null))
           .toList();
       for (int col = 0; col < BlockGroup.gridSize; col += 1) {
-        final column = List.generate(BlockGroup.gridSize, (i) => grid[col][i]);
+        final column = List.generate(BlockGroup.gridSize, (i) => grid[i][col]);
         _applyRow(column, near, step, far, ColumnAnimator(animator, col))
             .asMap()
             .forEach((i, block) {
-          nextGrid[col][i] = block;
+          nextGrid[i][col] = block;
         });
       }
     }
     // TODO: check difference & grow
-    return BlockGroup(
-        nextGrid.expand((row) => row).where((block) => block != null).toList());
+    return BlockGroup(nextGrid
+        .expand((blocks) => blocks)
+        .where((block) => block != null)
+        .toList());
   }
 
   List<Block> _applyRow(
@@ -115,7 +117,7 @@ class BlockGroup {
         nextRow[near] = animator.move(block, near);
       } else if (Block.sameLevel(nextRow[dest], block)) {
         // mergable case
-        nextRow[dest] = animator.merge(block, nextRow[dest], dest);
+        nextRow[dest] = animator.merge(block, nextRow[dest]);
       } else if (dest + step != index) {
         // if dest + step == index, then block is stuck and nothing happened
         nextRow[dest + step] = animator.move(block, dest + step);
@@ -126,32 +128,30 @@ class BlockGroup {
 }
 
 abstract class VecAnimator {
+  final Animator animator;
+
+  const VecAnimator(this.animator);
+
   Block move(Block block, int dest);
-  Block merge(Block block1, Block block2, int dest);
+  Block merge(Block block1, Block block2) {
+    return animator.merge(block1, block2);
+  }
 }
 
 class RowAnimator extends VecAnimator {
-  final Animator animator;
   final int index;
 
-  RowAnimator(this.animator, this.index);
-
-  Block move(Block block, int dest) =>
-      animator.move(block, BlockCoord(dest, index));
-
-  Block merge(Block block1, Block block2, int dest) =>
-      animator.merge(block1, block2);
-}
-
-class ColumnAnimator extends VecAnimator {
-  final Animator animator;
-  final int index;
-
-  ColumnAnimator(this.animator, this.index);
+  const RowAnimator(Animator animator, this.index) : super(animator);
 
   Block move(Block block, int dest) =>
       animator.move(block, BlockCoord(index, dest));
+}
 
-  Block merge(Block block1, Block block2, int dest) =>
-      animator.merge(block1, block2);
+class ColumnAnimator extends VecAnimator {
+  final int index;
+
+  const ColumnAnimator(Animator animator, this.index) : super(animator);
+
+  Block move(Block block, int dest) =>
+      animator.move(block, BlockCoord(dest, index));
 }

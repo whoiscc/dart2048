@@ -14,15 +14,16 @@ extension _ClassName on BlockStatus {
 }
 
 class BlockCoord {
-  final int x, y;
+  final int row, col;
 
-  const BlockCoord(this.x, this.y);
+  const BlockCoord(this.row, this.col);
 
-  num get left => Block.marginSize + (Block.normalSize + Block.marginSize) * x;
-  num get top => Block.marginSize + (Block.normalSize + Block.marginSize) * y;
+  num get left =>
+      Block.marginSize + (Block.normalSize + Block.marginSize) * col;
+  num get top => Block.marginSize + (Block.normalSize + Block.marginSize) * row;
 
   static bool isEqual(BlockCoord c1, BlockCoord c2) =>
-      c1.x == c2.x && c1.y == c2.y;
+      c1.row == c2.row && c1.col == c2.col;
 }
 
 class Block {

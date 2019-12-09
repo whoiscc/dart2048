@@ -76,15 +76,15 @@ class Animator {
 
 class Move {
   final Block block, nextBlock;
-  Move(this.block, this.nextBlock);
+  const Move(this.block, this.nextBlock);
 }
 
 class Grow {
   final Block block;
-  Grow(this.block);
+  const Grow(this.block);
 }
 
 class Merge {
   final Block merged1, merged2, nextBlock;
-  Merge(this.merged1, this.merged2, this.nextBlock);
+  const Merge(this.merged1, this.merged2, this.nextBlock);
 }

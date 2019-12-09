@@ -28,9 +28,10 @@ void main() {
     var group = BlockGroup([Block(1, BlockCoord(0, 0))]);
     final animator = FakeAnimator();
     group = group.apply(Direction.right, animator);
-    // expect(group.blocks.length, equals(1));
-    final block = group.blocks[0];
-    expect(BlockCoord.isEqual(block.coord, BlockCoord(size - 1, 0)), isTrue);
+    expect(
+        group.blocks.any((block) =>
+            BlockCoord.isEqual(block.coord, BlockCoord(0, size - 1))),
+        isTrue);
   });
 
   test('move it twice', () {
@@ -38,8 +39,45 @@ void main() {
     final animator = FakeAnimator();
     group = group.apply(Direction.right, animator);
     group = group.apply(Direction.down, animator);
-    expect(group.blocks.length, equals(1));
-    final block = group.blocks[0];
-    expect(BlockCoord.isEqual(block.coord, BlockCoord(size - 1, size - 1)), isTrue);
+    expect(
+        group.blocks.any((block) =>
+            BlockCoord.isEqual(block.coord, BlockCoord(size - 1, size - 1))),
+        isTrue);
+  });
+
+  test('move two blocks', () {
+    var group = BlockGroup([
+      Block(1, BlockCoord(0, 0)),
+      Block(1, BlockCoord(1, 0)),
+    ]);
+    final animator = FakeAnimator();
+    group = group.apply(Direction.right, animator);
+    expect(
+        group.blocks.any((block) =>
+            BlockCoord.isEqual(block.coord, BlockCoord(0, size - 1))),
+        isTrue);
+    expect(
+        group.blocks.any((block) =>
+            BlockCoord.isEqual(block.coord, BlockCoord(1, size - 1))),
+        isTrue);
+  });
+
+  test('move two blocks on a row', () {
+    var group = BlockGroup([
+      Block(1, BlockCoord(0, 0)),
+      Block(2, BlockCoord(0, 1)),
+    ]);
+    final animator = FakeAnimator();
+    group = group.apply(Direction.right, animator);
+    expect(
+        group.blocks.any((block) =>
+            BlockCoord.isEqual(block.coord, BlockCoord(0, size - 2)) &&
+            block.level == 1),
+        isTrue);
+    expect(
+        group.blocks.any((block) =>
+            BlockCoord.isEqual(block.coord, BlockCoord(0, size - 1)) &&
+            block.level == 2),
+        isTrue);
   });
 }
