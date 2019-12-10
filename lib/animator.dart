@@ -5,7 +5,7 @@ import 'dart:html';
 import 'package:dart2048/block.dart';
 
 class Animator {
-  static const stage1Duration = 1.0;
+  static const stage1Duration = 0.5;
   static const stage2Duration = 0.3;
 
   List<Move> _moves;
@@ -15,6 +15,7 @@ class Animator {
   Animator() {
     _moves = List();
     _grows = List();
+    _merges = List();
   }
 
   Block grow(BlockCoord coord) {
@@ -46,6 +47,8 @@ class Animator {
     _moves.clear();
     final savedGrows = List.from(_grows);
     _grows.clear();
+    final savedMerges = List.from(_merges);
+    _merges.clear();
     Timer(Duration(milliseconds: (stage2Delay * 1000).floor()), () {
       print('clean');
       for (Grow grow in savedGrows) {
@@ -60,13 +63,22 @@ class Animator {
           beforeGrow();
         }
         window.requestAnimationFrame((n) {
-          print('grow');
+          print('grow & merge');
           for (Grow grow in savedGrows) {
             grow.block
-              ..sizeTransDuration = Animator.stage2Duration
+              ..sizeTransDuration = stage2Duration
               ..size = Block.normalSize;
           }
-          // TODO: merge animation
+          for (Merge merge in savedMerges) {
+            // merge..merged1.hide()..merged2.hide();
+            merge.nextBlock
+              ..sizeTransDuration = stage2Duration / 2
+              ..size = Block.normalSize + Block.marginSize;
+            Timer(Duration(milliseconds: (stage2Duration / 2 * 1000).floor()),
+                () {
+              merge.nextBlock.size = Block.normalSize;
+            });
+          }
           Timer(Duration(milliseconds: (stage2Duration * 1000).floor()), after);
         });
       });

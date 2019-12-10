@@ -10,7 +10,17 @@ void main() {
   final animator = Animator();
   var group = BlockGroup.initialize(animator);
   animator.apply(() {
-    group = group.apply(Direction.right, animator);
+    grid.onClick.listen((event) {
+      final oldGroup = group;
+      group = group.apply(Direction.right, animator);
+      animator.apply(() {
+        print('finish');
+      }, beforeGrow: () {
+        print('replace');
+        oldGroup.remove();
+        group.attach(grid);
+      });
+    });
   }, beforeGrow: () {
     print('attach');
     group.attach(grid);

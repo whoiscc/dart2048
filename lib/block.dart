@@ -97,6 +97,10 @@ class Block {
     _element.remove();
   }
 
+  hide() {
+    _element.style.display = 'none';
+  }
+
   set sizeTransDuration(num duration) {
     final stage2Trans =
         'width ${duration}s, height ${duration}s, line-height ${duration}s, font-size ${duration}s, margin ${duration}s';

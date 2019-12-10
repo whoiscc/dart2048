@@ -125,6 +125,10 @@ class BlockGroup {
       } else if (dest + step != index) {
         // if dest + step == index, then block is stuck and nothing happened
         nextRow[dest + step] = animator.move(block, dest + step);
+      } else {
+        // the block is stuck and survives to next group
+        // no animation is needed
+        nextRow[index] = block;
       }
     }
     return nextRow;

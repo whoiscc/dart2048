@@ -169,8 +169,27 @@ void main() {
     final animator = FakeAnimator();
     group = group.apply(Direction.left, animator);
     expect(
-        group.blocks.any((block) =>
-            !BlockCoord.isEqual(block.coord, BlockCoord(0, 0))),
+        group.blocks
+            .any((block) => !BlockCoord.isEqual(block.coord, BlockCoord(0, 0))),
         isFalse);
+  });
+
+  test('stuck block survives', () {
+    var group = BlockGroup([
+      Block(1, BlockCoord(0, 0)),
+      Block(2, BlockCoord(0, 1)),
+    ]);
+    final animator = FakeAnimator();
+    group = group.apply(Direction.left, animator);
+    expect(
+        group.blocks.any((block) =>
+            BlockCoord.isEqual(block.coord, BlockCoord(0, 0)) &&
+            block.level == 1),
+        isTrue);
+    expect(
+        group.blocks.any((block) =>
+            BlockCoord.isEqual(block.coord, BlockCoord(0, 1)) &&
+            block.level == 2),
+        isTrue);
   });
 }
